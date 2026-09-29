@@ -1,0 +1,42 @@
+name: Build Android AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: تحميل الملفات
+        uses: actions/checkout@v4
+
+      - name: إعداد Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: إعداد Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: فك المشروع
+        run: |
+          mkdir project
+          unzip -q RunningGameAndroid_API36.zip -d project
+
+      - name: تحديث Android Gradle Plugin
+        run: |
+          sed -i "s/com.android.application' version '[^']*'/com.android.application' version '8.13.2'/" project/build.gradle
+
+      - name: بناء AAB
+        working-directory: project
+        run: gradle :app:bundleRelease
+
+      - name: حفظ ملف AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: RunningGame-AAB
+          path: project/app/build/outputs/bundle/release/*.aab
